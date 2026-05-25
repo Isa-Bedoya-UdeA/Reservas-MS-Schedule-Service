@@ -17,4 +17,9 @@ public interface EmployeeService {
     List<EmployeeResponseDTO> getEmployeesByProvider(UUID providerId, UUID providerIdFromJWT);
     List<EmployeeResponseDTO> getActiveEmployeesByProvider(UUID providerId, UUID providerIdFromJWT);
     List<EmployeeResponseDTO> getActiveEmployees();
+
+    // Methods for Reservation Service integration
+    boolean isEmployeeActive(UUID employeeId);
+    UUID getEmployeeProviderId(UUID employeeId);
+    EmployeeResponseDTO getEmployeeByIdPublic(UUID employeeId);
 }

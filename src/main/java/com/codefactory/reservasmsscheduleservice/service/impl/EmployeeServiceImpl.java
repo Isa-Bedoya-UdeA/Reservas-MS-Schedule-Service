@@ -142,4 +142,25 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .map(employeeMapper::toDto)
                 .toList();
     }
+
+    @Override
+    public boolean isEmployeeActive(UUID employeeId) {
+        return employeeRepository.findById(employeeId)
+                .map(Employee::getActive)
+                .orElse(false);
+    }
+
+    @Override
+    public UUID getEmployeeProviderId(UUID employeeId) {
+        return employeeRepository.findById(employeeId)
+                .map(Employee::getProviderId)
+                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
+    }
+
+    @Override
+    public EmployeeResponseDTO getEmployeeByIdPublic(UUID employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
+        return employeeMapper.toDto(employee);
+    }
 }

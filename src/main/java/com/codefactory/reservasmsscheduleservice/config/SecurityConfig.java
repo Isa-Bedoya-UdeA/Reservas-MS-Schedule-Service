@@ -42,6 +42,14 @@ public class SecurityConfig {
                         .requestMatchers("/configuration/**").permitAll()
                         // Endpoint público para empleados activos
                         .requestMatchers("/api/schedule/employees/active").permitAll()
+                        // Endpoints públicos para integración con Reservation Service
+                        .requestMatchers("/api/schedule/employees/*/active").permitAll()
+                        .requestMatchers("/api/schedule/employees/*/provider").permitAll()
+                        .requestMatchers("/api/schedule/employees/*/info").permitAll()
+                        // Endpoints internos para comunicación entre microservicios (Reservation -> Schedule)
+                        // La validación de permisos se hace en el servicio, no en el controlador
+                        .requestMatchers("/api/schedule/schedule-blocks/reservation").permitAll()
+                        .requestMatchers("/api/schedule/schedule-blocks/reservation/*").permitAll()
                         // Endpoint público para empleados activos de un servicio
                         .requestMatchers("/api/schedule/employee-services/service/*/active").permitAll()
                         // Employee Service Offering endpoints requieren autenticación

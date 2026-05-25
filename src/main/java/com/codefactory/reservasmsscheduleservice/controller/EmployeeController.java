@@ -167,4 +167,56 @@ public class EmployeeController {
     public ResponseEntity<List<EmployeeResponseDTO>> getActiveEmployeesByProvider() {
         return ResponseEntity.ok(employeeService.getActiveEmployees());
     }
+
+    // ==================== ENDPOINTS FOR RESERVATION SERVICE ====================
+
+    /**
+     * Check if an employee is active. Public endpoint for other microservices.
+     */
+    @GetMapping("/{id}/active")
+    @Operation(
+        summary = "Check if employee is active",
+        description = "Returns whether an employee is active. Public endpoint for other microservices."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Employee active status returned")
+    })
+    public ResponseEntity<Boolean> isEmployeeActive(@PathVariable UUID id) {
+        return ResponseEntity.ok(employeeService.isEmployeeActive(id));
+    }
+
+    /**
+     * Get the provider ID for an employee. Public endpoint for other microservices.
+     */
+    @GetMapping("/{id}/provider")
+    @Operation(
+        summary = "Get employee provider ID",
+        description = "Returns the provider ID associated with an employee. Public endpoint for other microservices."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Provider ID returned"),
+        @ApiResponse(responseCode = "404", description = "Employee not found")
+    })
+    public ResponseEntity<UUID> getEmployeeProviderId(@PathVariable UUID id) {
+        return ResponseEntity.ok(employeeService.getEmployeeProviderId(id));
+    }
+
+    /**
+     * Get basic employee info (name). Public endpoint for other microservices.
+     * Only returns id, name and providerId - no sensitive data.
+     */
+    @GetMapping("/{id}/info")
+    @Operation(
+        summary = "Get employee basic info",
+        description = "Returns basic employee info (id, name). Public endpoint for other microservices."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Employee info returned"),
+        @ApiResponse(responseCode = "404", description = "Employee not found")
+    })
+    public ResponseEntity<EmployeeResponseDTO> getEmployeeBasicInfo(@PathVariable UUID id) {
+        // Only return basic info without provider ownership check
+        EmployeeResponseDTO employee = employeeService.getEmployeeByIdPublic(id);
+        return ResponseEntity.ok(employee);
+    }
 }
