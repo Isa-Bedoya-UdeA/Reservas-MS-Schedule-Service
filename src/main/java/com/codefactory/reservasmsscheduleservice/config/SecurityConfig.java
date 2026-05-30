@@ -40,6 +40,9 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-resources/**").permitAll()
                         .requestMatchers("/webjars/**").permitAll()
                         .requestMatchers("/configuration/**").permitAll()
+                        // Actuator endpoints para Prometheus (no exponer en prod)
+                        .requestMatchers("/actuator/**").permitAll()
+
                         // Endpoint público para empleados activos
                         .requestMatchers("/api/schedule/employees/active").permitAll()
                         // Endpoints públicos para integración con Reservation Service
