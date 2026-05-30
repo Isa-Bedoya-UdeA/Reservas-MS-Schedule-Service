@@ -28,8 +28,8 @@ spec:
     spec:
       containers:
         - name: schedule-service
-          image: reservas-ms-schedule-service:latest
-          imagePullPolicy: Never
+          image: isabedoya/reservas-ms-schedule-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8083
           env:
