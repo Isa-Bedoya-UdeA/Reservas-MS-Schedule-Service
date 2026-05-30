@@ -1,0 +1,73 @@
+# ========================================
+# MS-SCHEDULE-SERVICE - Kubernetes Configuration
+# ========================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: schedule-service-config
+  namespace: default
+data:
+  SPRING_PROFILE: "prod"
+  SERVER_PORT: "8083"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: schedule-service
+  labels:
+    app: schedule-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: schedule-service
+  template:
+    metadata:
+      labels:
+        app: schedule-service
+    spec:
+      containers:
+        - name: schedule-service
+          image: reservas-ms-schedule-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8083
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: schedule-service-secrets
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: schedule-service-secrets
+                  key: DB_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: schedule-service-secrets
+                  key: JWT_SECRET
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: schedule-service-secrets
+                  key: DB_URL
+            - name: SERVICES_AUTH_URL
+              valueFrom:
+                secretKeyRef:
+                  name: schedule-service-secrets
+                  key: SERVICES_AUTH_URL
+          # Probes disabled - actuator health is secured by Spring Security
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: schedule-service
+spec:
+  selector:
+    app: schedule-service
+  ports:
+    - port: 8083
+      targetPort: 8083
+  type: ClusterIP

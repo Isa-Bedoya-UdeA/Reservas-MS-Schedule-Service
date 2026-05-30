@@ -1,0 +1,6 @@
+# Kubernetes Secrets (NO SUBIR A GITHUB)
+# Estos archivos contienen credenciales sensibles
+secrets.yaml
+*-secrets.yaml
+*.secret.yml
+*.secret.yaml
