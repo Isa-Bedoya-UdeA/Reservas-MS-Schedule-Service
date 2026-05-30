@@ -32,6 +32,9 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 8083
+          envFrom:
+            - configMapRef:
+                name: schedule-service-config
           env:
             - name: DB_USER
               valueFrom:

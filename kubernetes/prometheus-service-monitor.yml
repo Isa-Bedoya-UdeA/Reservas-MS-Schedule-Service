@@ -1,0 +1,17 @@
+# ========================================
+# ServiceMonitor for Prometheus
+# ========================================
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: schedule-service-monitor
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: schedule-service
+  endpoints:
+    - port: "8083"
+      path: /actuator/prometheus
+      interval: 15s
