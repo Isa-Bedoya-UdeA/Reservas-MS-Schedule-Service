@@ -17,7 +17,7 @@ metadata:
   labels:
     app: schedule-service
 spec:
-  replicas: 2
+  replicas: 4
   selector:
     matchLabels:
       app: schedule-service
