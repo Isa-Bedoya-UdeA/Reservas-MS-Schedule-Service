@@ -1,6 +1,7 @@
 package com.codefactory.reservasmsscheduleservice.dto.response;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,7 @@ import com.codefactory.reservasmsscheduleservice.dto.external.ExternalServiceOff
  * DTO representing an employee with their associated services.
  */
 @Data
+@Builder
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
