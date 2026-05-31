@@ -235,6 +235,10 @@ Para el despliegue en Kubernetes, consulta la documentación de secrets:
 
 **[docs/kubernetes-secrets.md](docs/kubernetes-secrets.md)**
 
+## Observabilidad: Kubernetes, ArgoCD, Prometheus y Grafana
+
+**[docs/observability.md](docs/observability.md)** — Guía paso a paso para desplegar y monitorear el microservicio.
+
 ## Pruebas en Postman
 
 Para ver las pruebas detalladas de la API, consulta el archivo [docs/PruebasPostman.md](docs/PruebasPostman.md).
