@@ -97,8 +97,8 @@ class WorkScheduleControllerTest {
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().getContent()).isPresent();
-            assertThat(response.getBody().getContent().get().getDayOfWeek()).isEqualTo("LUNES");
+            assertThat(response.getBody().getContent()).isNotNull();
+            assertThat(response.getBody().getContent().getDayOfWeek()).isEqualTo("LUNES");
         }
     }
 
@@ -133,8 +133,8 @@ class WorkScheduleControllerTest {
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().getContent()).isPresent();
-            assertThat(response.getBody().getContent().get().getDayOfWeek()).isEqualTo("MARTES");
+            assertThat(response.getBody().getContent()).isNotNull();
+            assertThat(response.getBody().getContent().getDayOfWeek()).isEqualTo("MARTES");
         }
     }
 
@@ -173,8 +173,8 @@ class WorkScheduleControllerTest {
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().getContent()).isPresent();
-            assertThat(response.getBody().getContent().get().getId()).isEqualTo(scheduleId);
+            assertThat(response.getBody().getContent()).isNotNull();
+            assertThat(response.getBody().getContent().getId()).isEqualTo(scheduleId);
         }
     }
 

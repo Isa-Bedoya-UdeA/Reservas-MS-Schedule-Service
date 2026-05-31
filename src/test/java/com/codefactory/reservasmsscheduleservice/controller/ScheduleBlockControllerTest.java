@@ -145,8 +145,8 @@ class ScheduleBlockControllerTest {
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().getContent()).isPresent();
-            assertThat(response.getBody().getContent().get().getId()).isEqualTo(blockId);
+            assertThat(response.getBody().getContent()).isNotNull();
+            assertThat(response.getBody().getContent().getId()).isEqualTo(blockId);
         }
     }
 
