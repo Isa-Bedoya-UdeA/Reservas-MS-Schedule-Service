@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -90,12 +92,13 @@ class WorkScheduleControllerTest {
             when(workScheduleService.createWorkSchedule(any(), eq(providerId))).thenReturn(workScheduleResponse);
 
             // When
-            ResponseEntity<WorkScheduleResponseDTO> response = workScheduleController.createWorkSchedule(request);
+            ResponseEntity<EntityModel<WorkScheduleResponseDTO>> response = workScheduleController.createWorkSchedule(request);
 
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().getDayOfWeek()).isEqualTo("LUNES");
+            assertThat(response.getBody().getContent()).isPresent();
+            assertThat(response.getBody().getContent().get().getDayOfWeek()).isEqualTo("LUNES");
         }
     }
 
@@ -125,12 +128,13 @@ class WorkScheduleControllerTest {
             when(workScheduleService.updateWorkSchedule(eq(scheduleId), any(), eq(providerId))).thenReturn(updated);
 
             // When
-            ResponseEntity<WorkScheduleResponseDTO> response = workScheduleController.updateWorkSchedule(scheduleId, request);
+            ResponseEntity<EntityModel<WorkScheduleResponseDTO>> response = workScheduleController.updateWorkSchedule(scheduleId, request);
 
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().getDayOfWeek()).isEqualTo("MARTES");
+            assertThat(response.getBody().getContent()).isPresent();
+            assertThat(response.getBody().getContent().get().getDayOfWeek()).isEqualTo("MARTES");
         }
     }
 
@@ -164,12 +168,13 @@ class WorkScheduleControllerTest {
             when(workScheduleService.getWorkScheduleById(scheduleId, providerId)).thenReturn(workScheduleResponse);
 
             // When
-            ResponseEntity<WorkScheduleResponseDTO> response = workScheduleController.getWorkScheduleById(scheduleId);
+            ResponseEntity<EntityModel<WorkScheduleResponseDTO>> response = workScheduleController.getWorkScheduleById(scheduleId);
 
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().getId()).isEqualTo(scheduleId);
+            assertThat(response.getBody().getContent()).isPresent();
+            assertThat(response.getBody().getContent().get().getId()).isEqualTo(scheduleId);
         }
     }
 
@@ -185,11 +190,12 @@ class WorkScheduleControllerTest {
                     .thenReturn(List.of(workScheduleResponse));
 
             // When
-            ResponseEntity<List<WorkScheduleResponseDTO>> response = workScheduleController.getWorkSchedulesByEmployee(employeeId);
+            ResponseEntity<CollectionModel<EntityModel<WorkScheduleResponseDTO>>> response = workScheduleController.getWorkSchedulesByEmployee(employeeId);
 
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).hasSize(1);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().getContent()).hasSize(1);
         }
     }
 
@@ -205,11 +211,12 @@ class WorkScheduleControllerTest {
                     .thenReturn(List.of(workScheduleResponse));
 
             // When
-            ResponseEntity<List<WorkScheduleResponseDTO>> response = workScheduleController.getActiveWorkSchedulesByEmployee(employeeId);
+            ResponseEntity<CollectionModel<EntityModel<WorkScheduleResponseDTO>>> response = workScheduleController.getActiveWorkSchedulesByEmployee(employeeId);
 
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).hasSize(1);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().getContent()).hasSize(1);
         }
     }
 
@@ -225,11 +232,12 @@ class WorkScheduleControllerTest {
                     .thenReturn(List.of(workScheduleResponse));
 
             // When
-            ResponseEntity<List<WorkScheduleResponseDTO>> response = workScheduleController.getWorkSchedulesByEmployeePublic(employeeId);
+            ResponseEntity<CollectionModel<EntityModel<WorkScheduleResponseDTO>>> response = workScheduleController.getWorkSchedulesByEmployeePublic(employeeId);
 
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).hasSize(1);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().getContent()).hasSize(1);
         }
     }
 }

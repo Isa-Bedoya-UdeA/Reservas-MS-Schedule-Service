@@ -14,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -100,7 +102,7 @@ class ScheduleBlockControllerTest {
             when(scheduleBlockService.createScheduleBlock(any(), eq(providerId))).thenReturn(scheduleBlockResponse);
 
             // When
-            ResponseEntity<ScheduleBlockResponseDTO> response = scheduleBlockController.createScheduleBlock(request);
+            ResponseEntity<EntityModel<ScheduleBlockResponseDTO>> response = scheduleBlockController.createScheduleBlock(request);
 
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -138,12 +140,13 @@ class ScheduleBlockControllerTest {
             when(scheduleBlockService.getScheduleBlockById(blockId, providerId)).thenReturn(scheduleBlockResponse);
 
             // When
-            ResponseEntity<ScheduleBlockResponseDTO> response = scheduleBlockController.getScheduleBlockById(blockId);
+            ResponseEntity<EntityModel<ScheduleBlockResponseDTO>> response = scheduleBlockController.getScheduleBlockById(blockId);
 
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().getId()).isEqualTo(blockId);
+            assertThat(response.getBody().getContent()).isPresent();
+            assertThat(response.getBody().getContent().get().getId()).isEqualTo(blockId);
         }
     }
 
@@ -159,11 +162,12 @@ class ScheduleBlockControllerTest {
                     .thenReturn(List.of(scheduleBlockResponse));
 
             // When
-            ResponseEntity<List<ScheduleBlockResponseDTO>> response = scheduleBlockController.getScheduleBlocksByEmployee(employeeId);
+            ResponseEntity<CollectionModel<EntityModel<ScheduleBlockResponseDTO>>> response = scheduleBlockController.getScheduleBlocksByEmployee(employeeId);
 
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).hasSize(1);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().getContent()).hasSize(1);
         }
     }
 
@@ -179,11 +183,12 @@ class ScheduleBlockControllerTest {
                     .thenReturn(List.of(scheduleBlockResponse));
 
             // When
-            ResponseEntity<List<ScheduleBlockResponseDTO>> response = scheduleBlockController.getScheduleBlocksByEmployeePublic(employeeId);
+            ResponseEntity<CollectionModel<EntityModel<ScheduleBlockResponseDTO>>> response = scheduleBlockController.getScheduleBlocksByEmployeePublic(employeeId);
 
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).hasSize(1);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().getContent()).hasSize(1);
         }
     }
 
@@ -206,12 +211,13 @@ class ScheduleBlockControllerTest {
                     .thenReturn(List.of(scheduleBlockResponse));
 
             // When
-            ResponseEntity<List<ScheduleBlockResponseDTO>> response = scheduleBlockController
+            ResponseEntity<CollectionModel<EntityModel<ScheduleBlockResponseDTO>>> response = scheduleBlockController
                     .getScheduleBlocksByEmployeeAndDateRange(request);
 
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).hasSize(1);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().getContent()).hasSize(1);
         }
     }
 
@@ -227,12 +233,13 @@ class ScheduleBlockControllerTest {
                     .thenReturn(List.of(scheduleBlockResponse));
 
             // When
-            ResponseEntity<List<ScheduleBlockResponseDTO>> response = scheduleBlockController
+            ResponseEntity<CollectionModel<EntityModel<ScheduleBlockResponseDTO>>> response = scheduleBlockController
                     .getScheduleBlocksByEmployeeAndDate(employeeId, today);
 
             // Then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).hasSize(1);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().getContent()).hasSize(1);
         }
     }
 

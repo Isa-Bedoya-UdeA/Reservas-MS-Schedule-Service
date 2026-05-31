@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -83,7 +85,7 @@ class EmployeeControllerTest {
 
             when(employeeService.createEmployee(any(CreateEmployeeRequestDTO.class), eq(providerId))).thenReturn(employeeResponse);
 
-            ResponseEntity<EmployeeResponseDTO> response = employeeController.createEmployee(request);
+            ResponseEntity<EntityModel<EmployeeResponseDTO>> response = employeeController.createEmployee(request);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
             assertThat(response.getBody()).isNotNull();
@@ -112,11 +114,12 @@ class EmployeeControllerTest {
 
             when(employeeService.updateEmployee(eq(employeeId), any(UpdateEmployeeRequestDTO.class), eq(providerId))).thenReturn(updated);
 
-            ResponseEntity<EmployeeResponseDTO> response = employeeController.updateEmployee(employeeId, request);
+            ResponseEntity<EntityModel<EmployeeResponseDTO>> response = employeeController.updateEmployee(employeeId, request);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().getFullName()).isEqualTo("Empleado Actualizado");
+            assertThat(response.getBody().getContent()).isPresent();
+            assertThat(response.getBody().getContent().get().getFullName()).isEqualTo("Empleado Actualizado");
         }
     }
 
@@ -177,11 +180,12 @@ class EmployeeControllerTest {
         void getEmployeeById_ReturnsEmployee() {
             when(employeeService.getEmployeeById(employeeId, providerId)).thenReturn(employeeResponse);
 
-            ResponseEntity<EmployeeResponseDTO> response = employeeController.getEmployeeById(employeeId);
+            ResponseEntity<EntityModel<EmployeeResponseDTO>> response = employeeController.getEmployeeById(employeeId);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().getId()).isEqualTo(employeeId);
+            assertThat(response.getBody().getContent()).isPresent();
+            assertThat(response.getBody().getContent().get().getId()).isEqualTo(employeeId);
         }
     }
 
@@ -194,10 +198,11 @@ class EmployeeControllerTest {
         void getEmployeesByProvider_ReturnsList() {
             when(employeeService.getEmployeesByProvider(providerId, providerId)).thenReturn(List.of(employeeResponse));
 
-            ResponseEntity<List<EmployeeResponseDTO>> response = employeeController.getEmployeesByProvider();
+            ResponseEntity<CollectionModel<EntityModel<EmployeeResponseDTO>>> response = employeeController.getEmployeesByProvider();
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).hasSize(1);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().getContent()).hasSize(1);
         }
     }
 
@@ -210,10 +215,11 @@ class EmployeeControllerTest {
         void getActiveEmployeesByProvider_ReturnsList() {
             when(employeeService.getActiveEmployees()).thenReturn(List.of(employeeResponse));
 
-            ResponseEntity<List<EmployeeResponseDTO>> response = employeeController.getActiveEmployeesByProvider();
+            ResponseEntity<CollectionModel<EntityModel<EmployeeResponseDTO>>> response = employeeController.getActiveEmployeesByProvider();
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).hasSize(1);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().getContent()).hasSize(1);
         }
     }
 
