@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +26,10 @@ import com.codefactory.reservasmsscheduleservice.service.ScheduleBlockService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("/api/schedule/schedule-blocks")
@@ -48,12 +54,15 @@ public class ScheduleBlockController {
         @ApiResponse(responseCode = "404", description = "Employee not found"),
         @ApiResponse(responseCode = "409", description = "Schedule block conflicts with existing block or employee doesn't work during this time")
     })
-    public ResponseEntity<ScheduleBlockResponseDTO> createScheduleBlock(
+    public ResponseEntity<EntityModel<ScheduleBlockResponseDTO>> createScheduleBlock(
             @Valid @RequestBody CreateScheduleBlockRequestDTO request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID providerId = UUID.fromString(userIdStr);
-        ScheduleBlockResponseDTO response = scheduleBlockService.createScheduleBlock(request, providerId);
-        return ResponseEntity.status(201).body(response);
+        ScheduleBlockResponseDTO dto = scheduleBlockService.createScheduleBlock(request, providerId);
+        EntityModel<ScheduleBlockResponseDTO> entityModel = EntityModel.of(dto,
+            linkTo(methodOn(ScheduleBlockController.class).getScheduleBlockById(dto.getId())).withSelfRel(),
+            linkTo(methodOn(ScheduleBlockController.class).getScheduleBlocksByEmployee(dto.getEmployeeId())).withRel("employee-blocks"));
+        return ResponseEntity.status(201).body(entityModel);
     }
 
     @DeleteMapping("/{id}")
@@ -88,12 +97,14 @@ public class ScheduleBlockController {
         @ApiResponse(responseCode = "403", description = "Does not have PROVEEDOR role or not the owner of the employee"),
         @ApiResponse(responseCode = "404", description = "Schedule block not found")
     })
-    public ResponseEntity<ScheduleBlockResponseDTO> getScheduleBlockById(
+    public ResponseEntity<EntityModel<ScheduleBlockResponseDTO>> getScheduleBlockById(
             @Parameter(description = "ID del bloqueo de horario") @PathVariable UUID id) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID providerId = UUID.fromString(userIdStr);
-        ScheduleBlockResponseDTO response = scheduleBlockService.getScheduleBlockById(id, providerId);
-        return ResponseEntity.ok(response);
+        ScheduleBlockResponseDTO dto = scheduleBlockService.getScheduleBlockById(id, providerId);
+        EntityModel<ScheduleBlockResponseDTO> entityModel = EntityModel.of(dto,
+            linkTo(methodOn(ScheduleBlockController.class).getScheduleBlockById(id)).withSelfRel());
+        return ResponseEntity.ok(entityModel);
     }
 
     @GetMapping("/employee/{employeeId}")
@@ -108,12 +119,17 @@ public class ScheduleBlockController {
         @ApiResponse(responseCode = "403", description = "Does not have PROVEEDOR role or not the owner of the employee"),
         @ApiResponse(responseCode = "404", description = "Employee not found")
     })
-    public ResponseEntity<List<ScheduleBlockResponseDTO>> getScheduleBlocksByEmployee(
+    public ResponseEntity<CollectionModel<EntityModel<ScheduleBlockResponseDTO>>> getScheduleBlocksByEmployee(
             @Parameter(description = "ID del empleado") @PathVariable UUID employeeId) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID providerId = UUID.fromString(userIdStr);
-        List<ScheduleBlockResponseDTO> response = scheduleBlockService.getScheduleBlocksByEmployee(employeeId, providerId);
-        return ResponseEntity.ok(response);
+        List<ScheduleBlockResponseDTO> dtos = scheduleBlockService.getScheduleBlocksByEmployee(employeeId, providerId);
+        List<EntityModel<ScheduleBlockResponseDTO>> models = dtos.stream()
+            .map(dto -> EntityModel.of(dto,
+                linkTo(methodOn(ScheduleBlockController.class).getScheduleBlockById(dto.getId())).withSelfRel()))
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(CollectionModel.of(models,
+            linkTo(methodOn(ScheduleBlockController.class).getScheduleBlocksByEmployee(employeeId)).withSelfRel()));
     }
 
     @GetMapping("/employee/{employeeId}/public")
@@ -126,10 +142,15 @@ public class ScheduleBlockController {
         @ApiResponse(responseCode = "401", description = "Not authenticated"),
         @ApiResponse(responseCode = "404", description = "Employee not found")
     })
-    public ResponseEntity<List<ScheduleBlockResponseDTO>> getScheduleBlocksByEmployeePublic(
+    public ResponseEntity<CollectionModel<EntityModel<ScheduleBlockResponseDTO>>> getScheduleBlocksByEmployeePublic(
             @Parameter(description = "ID del empleado") @PathVariable UUID employeeId) {
-        List<ScheduleBlockResponseDTO> response = scheduleBlockService.getScheduleBlocksByEmployeePublic(employeeId);
-        return ResponseEntity.ok(response);
+        List<ScheduleBlockResponseDTO> dtos = scheduleBlockService.getScheduleBlocksByEmployeePublic(employeeId);
+        List<EntityModel<ScheduleBlockResponseDTO>> models = dtos.stream()
+            .map(dto -> EntityModel.of(dto,
+                linkTo(methodOn(ScheduleBlockController.class).getScheduleBlockById(dto.getId())).withSelfRel()))
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(CollectionModel.of(models,
+            linkTo(methodOn(ScheduleBlockController.class).getScheduleBlocksByEmployeePublic(employeeId)).withSelfRel()));
     }
 
     @PostMapping("/date-range")
@@ -143,14 +164,19 @@ public class ScheduleBlockController {
         @ApiResponse(responseCode = "401", description = "Not authenticated"),
         @ApiResponse(responseCode = "404", description = "Employee not found")
     })
-    public ResponseEntity<List<ScheduleBlockResponseDTO>> getScheduleBlocksByEmployeeAndDateRange(
+    public ResponseEntity<CollectionModel<EntityModel<ScheduleBlockResponseDTO>>> getScheduleBlocksByEmployeeAndDateRange(
             @Valid @RequestBody GetScheduleBlocksByDateRangeRequestDTO request) {
-        List<ScheduleBlockResponseDTO> response = scheduleBlockService.getScheduleBlocksByEmployeeAndDateRange(
+        List<ScheduleBlockResponseDTO> dtos = scheduleBlockService.getScheduleBlocksByEmployeeAndDateRange(
             request.getEmployeeId(), 
             request.getStartDate(), 
             request.getEndDate()
         );
-        return ResponseEntity.ok(response);
+        List<EntityModel<ScheduleBlockResponseDTO>> models = dtos.stream()
+            .map(dto -> EntityModel.of(dto,
+                linkTo(methodOn(ScheduleBlockController.class).getScheduleBlockById(dto.getId())).withSelfRel()))
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(CollectionModel.of(models,
+            linkTo(methodOn(ScheduleBlockController.class).getScheduleBlocksByEmployeeAndDateRange(null)).withSelfRel()));
     }
 
     @GetMapping("/employee/{employeeId}/date")
@@ -163,11 +189,16 @@ public class ScheduleBlockController {
         @ApiResponse(responseCode = "401", description = "Not authenticated"),
         @ApiResponse(responseCode = "404", description = "Employee not found")
     })
-    public ResponseEntity<List<ScheduleBlockResponseDTO>> getScheduleBlocksByEmployeeAndDate(
+    public ResponseEntity<CollectionModel<EntityModel<ScheduleBlockResponseDTO>>> getScheduleBlocksByEmployeeAndDate(
             @Parameter(description = "ID del empleado") @PathVariable UUID employeeId,
             @Parameter(description = "Fecha específica") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        List<ScheduleBlockResponseDTO> response = scheduleBlockService.getScheduleBlocksByEmployeeAndDate(employeeId, date);
-        return ResponseEntity.ok(response);
+        List<ScheduleBlockResponseDTO> dtos = scheduleBlockService.getScheduleBlocksByEmployeeAndDate(employeeId, date);
+        List<EntityModel<ScheduleBlockResponseDTO>> models = dtos.stream()
+            .map(dto -> EntityModel.of(dto,
+                linkTo(methodOn(ScheduleBlockController.class).getScheduleBlockById(dto.getId())).withSelfRel()))
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(CollectionModel.of(models,
+            linkTo(methodOn(ScheduleBlockController.class).getScheduleBlocksByEmployeeAndDate(employeeId, date)).withSelfRel()));
     }
 
     @PostMapping("/reservation")

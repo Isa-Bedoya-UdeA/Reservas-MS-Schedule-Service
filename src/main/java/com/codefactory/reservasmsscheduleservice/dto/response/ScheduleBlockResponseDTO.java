@@ -1,6 +1,7 @@
 package com.codefactory.reservasmsscheduleservice.dto.response;
 
 import lombok.*;
+import org.springframework.hateoas.RepresentationModel;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -9,10 +10,10 @@ import java.util.UUID;
 
 @Getter
 @Setter
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class ScheduleBlockResponseDTO {
+public class ScheduleBlockResponseDTO extends RepresentationModel<ScheduleBlockResponseDTO> {
     
     private UUID id;
     private UUID employeeId;

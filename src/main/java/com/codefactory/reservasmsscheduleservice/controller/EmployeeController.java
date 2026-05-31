@@ -8,6 +8,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +23,10 @@ import com.codefactory.reservasmsscheduleservice.service.EmployeeService;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("/api/schedule/employees")
@@ -40,11 +47,15 @@ public class EmployeeController {
         @ApiResponse(responseCode = "401", description = "Not authenticated"),
         @ApiResponse(responseCode = "403", description = "Does not have PROVEEDOR role")
     })
-    public ResponseEntity<EmployeeResponseDTO> createEmployee(
+    public ResponseEntity<EntityModel<EmployeeResponseDTO>> createEmployee(
             @Valid @RequestBody CreateEmployeeRequestDTO request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID providerId = UUID.fromString(userIdStr);
-        return new ResponseEntity<>(employeeService.createEmployee(request, providerId), HttpStatus.CREATED);
+        EmployeeResponseDTO dto = employeeService.createEmployee(request, providerId);
+        EntityModel<EmployeeResponseDTO> entityModel = EntityModel.of(dto,
+            linkTo(methodOn(EmployeeController.class).getEmployeeById(dto.getId())).withSelfRel(),
+            linkTo(methodOn(EmployeeController.class).getEmployeesByProvider()).withRel("employees"));
+        return new ResponseEntity<>(entityModel, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -59,12 +70,15 @@ public class EmployeeController {
         @ApiResponse(responseCode = "403", description = "Not the creator of the employee"),
         @ApiResponse(responseCode = "404", description = "Employee not found")
     })
-    public ResponseEntity<EmployeeResponseDTO> updateEmployee(
+    public ResponseEntity<EntityModel<EmployeeResponseDTO>> updateEmployee(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateEmployeeRequestDTO request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID providerId = UUID.fromString(userIdStr);
-        return ResponseEntity.ok(employeeService.updateEmployee(id, request, providerId));
+        EmployeeResponseDTO dto = employeeService.updateEmployee(id, request, providerId);
+        EntityModel<EmployeeResponseDTO> entityModel = EntityModel.of(dto,
+            linkTo(methodOn(EmployeeController.class).getEmployeeById(id)).withSelfRel());
+        return ResponseEntity.ok(entityModel);
     }
 
     @DeleteMapping("/{id}")
@@ -134,10 +148,13 @@ public class EmployeeController {
         @ApiResponse(responseCode = "403", description = "Not the owner of the employee"),
         @ApiResponse(responseCode = "404", description = "Employee not found")
     })
-    public ResponseEntity<EmployeeResponseDTO> getEmployeeById(@PathVariable UUID id) {
+    public ResponseEntity<EntityModel<EmployeeResponseDTO>> getEmployeeById(@PathVariable UUID id) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID providerId = UUID.fromString(userIdStr);
-        return ResponseEntity.ok(employeeService.getEmployeeById(id, providerId));
+        EmployeeResponseDTO dto = employeeService.getEmployeeById(id, providerId);
+        EntityModel<EmployeeResponseDTO> entityModel = EntityModel.of(dto,
+            linkTo(methodOn(EmployeeController.class).getEmployeeById(id)).withSelfRel());
+        return ResponseEntity.ok(entityModel);
     }
 
     @GetMapping
@@ -150,10 +167,16 @@ public class EmployeeController {
         @ApiResponse(responseCode = "401", description = "Not authenticated"),
         @ApiResponse(responseCode = "403", description = "Does not have PROVEEDOR role")
     })
-    public ResponseEntity<List<EmployeeResponseDTO>> getEmployeesByProvider() {
+    public ResponseEntity<CollectionModel<EntityModel<EmployeeResponseDTO>>> getEmployeesByProvider() {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID providerId = UUID.fromString(userIdStr);
-        return ResponseEntity.ok(employeeService.getEmployeesByProvider(providerId, providerId));
+        List<EmployeeResponseDTO> dtos = employeeService.getEmployeesByProvider(providerId, providerId);
+        List<EntityModel<EmployeeResponseDTO>> models = dtos.stream()
+            .map(dto -> EntityModel.of(dto,
+                linkTo(methodOn(EmployeeController.class).getEmployeeById(dto.getId())).withSelfRel()))
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(CollectionModel.of(models,
+            linkTo(methodOn(EmployeeController.class).getEmployeesByProvider()).withSelfRel()));
     }
 
     @GetMapping("/active")
@@ -164,8 +187,14 @@ public class EmployeeController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "List of active employees returned successfully")
     })
-    public ResponseEntity<List<EmployeeResponseDTO>> getActiveEmployeesByProvider() {
-        return ResponseEntity.ok(employeeService.getActiveEmployees());
+    public ResponseEntity<CollectionModel<EntityModel<EmployeeResponseDTO>>> getActiveEmployeesByProvider() {
+        List<EmployeeResponseDTO> dtos = employeeService.getActiveEmployees();
+        List<EntityModel<EmployeeResponseDTO>> models = dtos.stream()
+            .map(dto -> EntityModel.of(dto,
+                linkTo(methodOn(EmployeeController.class).getEmployeeById(dto.getId())).withSelfRel()))
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(CollectionModel.of(models,
+            linkTo(methodOn(EmployeeController.class).getActiveEmployeesByProvider()).withSelfRel()));
     }
 
     // ==================== ENDPOINTS FOR RESERVATION SERVICE ====================

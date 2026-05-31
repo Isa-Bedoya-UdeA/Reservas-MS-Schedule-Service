@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,6 +22,9 @@ import com.codefactory.reservasmsscheduleservice.dto.response.ServiceWithEmploye
 import com.codefactory.reservasmsscheduleservice.service.EmployeeServiceOfferingService;
 
 import java.util.UUID;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
  * Controller for managing employee-service associations.
@@ -58,13 +62,15 @@ public class EmployeeServiceOfferingController {
             @ApiResponse(responseCode = "404", description = "Employee or service not found"),
             @ApiResponse(responseCode = "409", description = "Active association already exists")
     })
-    public ResponseEntity<EmployeeServiceResponseDTO> createAssociation(
+    public ResponseEntity<EntityModel<EmployeeServiceResponseDTO>> createAssociation(
             @Valid @RequestBody CreateEmployeeServiceRequestDTO request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID providerId = UUID.fromString(userIdStr);
-        return new ResponseEntity<>(
-                employeeServiceOfferingService.createAssociation(request, providerId),
-                HttpStatus.CREATED);
+        EmployeeServiceResponseDTO dto = employeeServiceOfferingService.createAssociation(request, providerId);
+        EntityModel<EmployeeServiceResponseDTO> entityModel = EntityModel.of(dto,
+            linkTo(methodOn(EmployeeServiceOfferingController.class).getServicesByEmployee(dto.getEmployeeId())).withRel("employee-services"),
+            linkTo(methodOn(EmployeeServiceOfferingController.class).getEmployeesByService(dto.getServiceId())).withRel("service-employees"));
+        return new ResponseEntity<>(entityModel, HttpStatus.CREATED);
     }
 
     /**

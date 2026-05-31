@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +22,10 @@ import com.codefactory.reservasmsscheduleservice.service.WorkScheduleService;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("/api/schedule/work-schedules")
@@ -44,12 +50,15 @@ public class WorkScheduleController {
         @ApiResponse(responseCode = "404", description = "Employee not found"),
         @ApiResponse(responseCode = "409", description = "Work schedule conflicts with existing schedule")
     })
-    public ResponseEntity<WorkScheduleResponseDTO> createWorkSchedule(
+    public ResponseEntity<EntityModel<WorkScheduleResponseDTO>> createWorkSchedule(
             @Valid @RequestBody CreateWorkScheduleRequestDTO request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID providerId = UUID.fromString(userIdStr);
-        WorkScheduleResponseDTO response = workScheduleService.createWorkSchedule(request, providerId);
-        return ResponseEntity.status(201).body(response);
+        WorkScheduleResponseDTO dto = workScheduleService.createWorkSchedule(request, providerId);
+        EntityModel<WorkScheduleResponseDTO> entityModel = EntityModel.of(dto,
+            linkTo(methodOn(WorkScheduleController.class).getWorkScheduleById(dto.getId())).withSelfRel(),
+            linkTo(methodOn(WorkScheduleController.class).getWorkSchedulesByEmployee(dto.getEmployeeId())).withRel("employee-schedules"));
+        return ResponseEntity.status(201).body(entityModel);
     }
 
     @PutMapping("/{id}")
@@ -65,13 +74,15 @@ public class WorkScheduleController {
         @ApiResponse(responseCode = "403", description = "Does not have PROVEEDOR role or not the owner of the employee"),
         @ApiResponse(responseCode = "404", description = "Work schedule not found")
     })
-    public ResponseEntity<WorkScheduleResponseDTO> updateWorkSchedule(
+    public ResponseEntity<EntityModel<WorkScheduleResponseDTO>> updateWorkSchedule(
             @Parameter(description = "ID del horario laboral") @PathVariable UUID id,
             @Valid @RequestBody UpdateWorkScheduleRequestDTO request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID providerId = UUID.fromString(userIdStr);
-        WorkScheduleResponseDTO response = workScheduleService.updateWorkSchedule(id, request, providerId);
-        return ResponseEntity.ok(response);
+        WorkScheduleResponseDTO dto = workScheduleService.updateWorkSchedule(id, request, providerId);
+        EntityModel<WorkScheduleResponseDTO> entityModel = EntityModel.of(dto,
+            linkTo(methodOn(WorkScheduleController.class).getWorkScheduleById(id)).withSelfRel());
+        return ResponseEntity.ok(entityModel);
     }
 
     @DeleteMapping("/{id}")
@@ -106,12 +117,14 @@ public class WorkScheduleController {
         @ApiResponse(responseCode = "403", description = "Does not have PROVEEDOR role or not the owner of the employee"),
         @ApiResponse(responseCode = "404", description = "Work schedule not found")
     })
-    public ResponseEntity<WorkScheduleResponseDTO> getWorkScheduleById(
+    public ResponseEntity<EntityModel<WorkScheduleResponseDTO>> getWorkScheduleById(
             @Parameter(description = "ID del horario laboral") @PathVariable UUID id) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID providerId = UUID.fromString(userIdStr);
-        WorkScheduleResponseDTO response = workScheduleService.getWorkScheduleById(id, providerId);
-        return ResponseEntity.ok(response);
+        WorkScheduleResponseDTO dto = workScheduleService.getWorkScheduleById(id, providerId);
+        EntityModel<WorkScheduleResponseDTO> entityModel = EntityModel.of(dto,
+            linkTo(methodOn(WorkScheduleController.class).getWorkScheduleById(id)).withSelfRel());
+        return ResponseEntity.ok(entityModel);
     }
 
     @GetMapping("/employee/{employeeId}")
@@ -126,12 +139,17 @@ public class WorkScheduleController {
         @ApiResponse(responseCode = "403", description = "Does not have PROVEEDOR role or not the owner of the employee"),
         @ApiResponse(responseCode = "404", description = "Employee not found")
     })
-    public ResponseEntity<List<WorkScheduleResponseDTO>> getWorkSchedulesByEmployee(
+    public ResponseEntity<CollectionModel<EntityModel<WorkScheduleResponseDTO>>> getWorkSchedulesByEmployee(
             @Parameter(description = "ID del empleado") @PathVariable UUID employeeId) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID providerId = UUID.fromString(userIdStr);
-        List<WorkScheduleResponseDTO> response = workScheduleService.getWorkSchedulesByEmployee(employeeId, providerId);
-        return ResponseEntity.ok(response);
+        List<WorkScheduleResponseDTO> dtos = workScheduleService.getWorkSchedulesByEmployee(employeeId, providerId);
+        List<EntityModel<WorkScheduleResponseDTO>> models = dtos.stream()
+            .map(dto -> EntityModel.of(dto,
+                linkTo(methodOn(WorkScheduleController.class).getWorkScheduleById(dto.getId())).withSelfRel()))
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(CollectionModel.of(models,
+            linkTo(methodOn(WorkScheduleController.class).getWorkSchedulesByEmployee(employeeId)).withSelfRel()));
     }
 
     @GetMapping("/employee/{employeeId}/active")
@@ -144,10 +162,15 @@ public class WorkScheduleController {
         @ApiResponse(responseCode = "401", description = "Not authenticated"),
         @ApiResponse(responseCode = "404", description = "Employee not found")
     })
-    public ResponseEntity<List<WorkScheduleResponseDTO>> getActiveWorkSchedulesByEmployee(
+    public ResponseEntity<CollectionModel<EntityModel<WorkScheduleResponseDTO>>> getActiveWorkSchedulesByEmployee(
             @Parameter(description = "ID del empleado") @PathVariable UUID employeeId) {
-        List<WorkScheduleResponseDTO> response = workScheduleService.getActiveWorkSchedulesByEmployee(employeeId);
-        return ResponseEntity.ok(response);
+        List<WorkScheduleResponseDTO> dtos = workScheduleService.getActiveWorkSchedulesByEmployee(employeeId);
+        List<EntityModel<WorkScheduleResponseDTO>> models = dtos.stream()
+            .map(dto -> EntityModel.of(dto,
+                linkTo(methodOn(WorkScheduleController.class).getWorkScheduleById(dto.getId())).withSelfRel()))
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(CollectionModel.of(models,
+            linkTo(methodOn(WorkScheduleController.class).getActiveWorkSchedulesByEmployee(employeeId)).withSelfRel()));
     }
 
     @GetMapping("/employee/{employeeId}/public")
@@ -160,9 +183,14 @@ public class WorkScheduleController {
         @ApiResponse(responseCode = "401", description = "Not authenticated"),
         @ApiResponse(responseCode = "404", description = "Employee not found")
     })
-    public ResponseEntity<List<WorkScheduleResponseDTO>> getWorkSchedulesByEmployeePublic(
+    public ResponseEntity<CollectionModel<EntityModel<WorkScheduleResponseDTO>>> getWorkSchedulesByEmployeePublic(
             @Parameter(description = "ID del empleado") @PathVariable UUID employeeId) {
-        List<WorkScheduleResponseDTO> response = workScheduleService.getWorkSchedulesByEmployeePublic(employeeId);
-        return ResponseEntity.ok(response);
+        List<WorkScheduleResponseDTO> dtos = workScheduleService.getWorkSchedulesByEmployeePublic(employeeId);
+        List<EntityModel<WorkScheduleResponseDTO>> models = dtos.stream()
+            .map(dto -> EntityModel.of(dto,
+                linkTo(methodOn(WorkScheduleController.class).getWorkScheduleById(dto.getId())).withSelfRel()))
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(CollectionModel.of(models,
+            linkTo(methodOn(WorkScheduleController.class).getWorkSchedulesByEmployeePublic(employeeId)).withSelfRel()));
     }
 }
